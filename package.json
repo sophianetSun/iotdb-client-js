@@ -1,0 +1,31 @@
+{
+  "name": "iotdb-client-nodejs",
+  "version": "0.0.1",
+  "repository": "",
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "devDependencies": {
+    "@creditkarma/thrift-typescript": "^3.7.6",
+    "@types/bun": "latest",
+    "@types/thrift": "^0.10.17",
+    "rimraf": "^6.0.1",
+    "thrift": "^0.21.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "description": "IoTDB nodejs client",
+  "files": ["dist", "READMD.md", "LICENSE"],
+  "keywords": ["iotdb", "client"],
+  "license": "apache",
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist",
+    "prebuild": "rimraf dist",
+    "test": "bun test"
+  },
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "radash": "^12.1.0"
+  }
+}
