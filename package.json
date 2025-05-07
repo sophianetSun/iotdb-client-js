@@ -15,13 +15,21 @@
     "typescript": "^5"
   },
   "description": "IoTDB nodejs client",
-  "files": ["dist", "READMD.md", "LICENSE"],
-  "keywords": ["iotdb", "client"],
+  "files": [
+    "dist",
+    "READMD.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "iotdb",
+    "client"
+  ],
   "license": "apache",
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist",
     "prebuild": "rimraf dist",
-    "test": "bun test"
+    "test": "bun test",
+    "dev": "bun src/index.ts"
   },
   "type": "module",
   "types": "dist/index.d.ts",

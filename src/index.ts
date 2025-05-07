@@ -437,8 +437,8 @@ class IoTDBClient {
     return this.client.executeRawDataQuery(req);
   }
 
-  // request a statment id from server
   async requestStatementId(sessionId: Int64) {
+    // request a statment id from server
     if (!this.client || !this.connection) {
       throw new Error("Client not connected");
     }
@@ -458,7 +458,7 @@ class Session {
     sessionId: Int64,
     statementId: Int64,
     fetchSize = 1000,
-    timeout = 30
+    timeout = 30000
   ) {
     this.client = client;
     this.sessionId = sessionId;
@@ -504,8 +504,146 @@ class Session {
 }
 async function makeRow({}: {}) {}
 
+const parseTS = (buf: Buffer<ArrayBufferLike>) => {
+  const bufView = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const vals = [];
+
+  for (let i = 0; i < bufView.byteLength; i += 8) {
+    const timestamp = bufView.getBigInt64(i);
+    vals.push(new Date(Number(timestamp)));
+  }
+  return vals;
+};
+
+const parseValue = (
+  dataType: string,
+  value: Buffer<ArrayBufferLike>,
+  timeIdxNullBits: string
+) => {
+  const bufView = new DataView(
+    value.buffer,
+    value.byteOffset,
+    value.byteLength
+  );
+  const vals = [];
+
+  switch (dataType) {
+    case "BOOLEAN":
+      for (let i = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          vals.push(bufView.getUint8(i) !== 0); // Boolean 값 읽기
+        }
+      }
+      break;
+    case "INT32":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          vals.push(bufView.getUint32(bufIdx));
+          bufIdx += 4;
+        }
+      }
+      break;
+    case "INT64":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          vals.push(bufView.getBigInt64(bufIdx));
+          bufIdx += 8;
+        }
+      }
+      break;
+    case "FLOAT":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          vals.push(bufView.getFloat32(bufIdx));
+          bufIdx += 4;
+        }
+      }
+      break;
+    case "DOUBLE":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          vals.push(bufView.getFloat64(bufIdx));
+          bufIdx += 8;
+        }
+      }
+      break;
+    case "TEXT":
+    case "STRING":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          const len = bufView.getUint32(bufIdx);
+          bufIdx += 4;
+          const textView = new DataView(
+            bufView.buffer,
+            bufView.byteOffset + bufIdx,
+            len
+          );
+          const text = new TextDecoder("utf-8").decode(textView);
+          vals.push(text);
+          bufIdx += len;
+        }
+      }
+      break;
+    case "BLOB":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          const len = bufView.getUint32(bufIdx);
+          bufIdx += 4;
+          const blobView = new DataView(bufView.buffer, bufIdx, len);
+          const blob = new Uint8Array(
+            blobView.buffer,
+            blobView.byteOffset + bufIdx,
+            len
+          );
+          vals.push(blob);
+          bufIdx += len;
+        }
+      }
+      break;
+    case "TIMESTAMP":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          const timestamp = bufView.getBigInt64(bufIdx);
+          vals.push(new Date(Number(timestamp)));
+          bufIdx += 8;
+        }
+      }
+      break;
+    case "DATE":
+      for (let i = 0, bufIdx = 0; i < timeIdxNullBits.length; i++) {
+        if (timeIdxNullBits[i] === "0") {
+          vals.push(null); // null 값 처리
+        } else {
+          const date = bufView.getUint32(bufIdx); // Returns to YYYYMMdd e.g. 20250507
+          vals.push(date); // Assuming date is in seconds
+          bufIdx += 4;
+        }
+      }
+      break;
+    default:
+      throw new Error(`Unsupported data type: ${dataType}`);
+  }
+  return vals;
+};
+
 const main = async () => {
-  const host = "172.16.20.158";
+  const host = "localhost";
   const port = 6667;
   const client = new IoTDBClient(host, port);
   const sessionParams = {
@@ -535,18 +673,91 @@ const main = async () => {
     const resp = await client.executeQueryStatement({
       sessionId: session.sessionId,
       // statement: "show databases",
-      statement: "select * from root.enerdot.ems.*",
+      // statement: "select * from root.enerdot.ems.*",
+      statement: "select * from root.enerdot.test.datatest",
       statementId,
-      timeout: 30,
+      timeout: 30 * 1000,
       fetchSize: 1000,
     });
 
-    const { time, valueList, bitmapList } = resp.queryDataSet as TSQueryDataSet;
-    const columnMap = resp.columnNameIndexMap;
-    const columnNames = resp.columns;
-    const columnTypes = resp.dataTypeList;
-    console.log(columnMap, columnNames, columnTypes);
+    const {
+      queryDataSet,
+      columnIndex2TsBlockColumnIndexList,
+      columnNameIndexMap,
+      status,
+      dataTypeList,
+    } = resp;
+    if (status.code !== 200) {
+      throw new Error(`Error: ${status.message}`);
+    } else if (
+      !queryDataSet ||
+      !dataTypeList ||
+      !columnIndex2TsBlockColumnIndexList
+    ) {
+      return [];
+    }
+    const { bitmapList, time, valueList } = queryDataSet;
+    // bitmaplist 에서 bit를 읽어서 null인지 아닌지 판단
+    const parseBitMap = (
+      bitmap: Buffer<ArrayBufferLike>,
+      timeLength: number
+    ) => {
+      const bits = Array.from(bitmap)
+        .map((byte) => byte.toString(2).padStart(8, "0"))
+        .join("");
+      if (bits.length !== timeLength) {
+        return bits.slice(0, timeLength);
+      }
+      return bits;
+    };
+    const result: Array<Record<string, unknown>> = parseTS(time).map((ts) => ({
+      time: ts,
+    }));
+    const foo = columnNameIndexMap
+      ?.entries()
+      .reduce((acc, [columnName, colIdx]) => {
+        const dataTypeIdx = columnIndex2TsBlockColumnIndexList.findIndex(
+          (val) => val === colIdx
+        );
+        if (dataTypeIdx === -1) {
+          throw new Error(`Column index not found for ${columnName}`);
+        }
+        const dataType = dataTypeList[dataTypeIdx];
+        if (!dataType) {
+          throw new Error(`Data type not found for index ${dataTypeIdx}`);
+        }
+        const valueBuf = valueList[colIdx];
+        if (!valueBuf) {
+          throw new Error(`Value buffer not found for index ${colIdx}`);
+        }
+        const bitmapBuf = bitmapList[colIdx];
+        if (!bitmapBuf) {
+          throw new Error(`Bitmap not found for index ${colIdx}`);
+        }
+        const bitmap = parseBitMap(bitmapBuf, acc.length);
 
+        const parsedValue = parseValue(dataType, valueBuf, bitmap);
+
+        acc.forEach((row, i) => {
+          if (i >= parsedValue.length) {
+            throw new Error(
+              `Index out of bounds: ${i} >= ${parsedValue.length}`
+            );
+          }
+          row[columnName] = parsedValue[i];
+        });
+        return acc;
+      }, result);
+    console.log("foo: ", foo);
+    const queryDataSetToRow = (
+      dataTypes: string[],
+      queryDataSet: TSQueryDataSet
+    ) => {
+      const rows = [];
+
+      const { time, valueList, bitmapList } = queryDataSet;
+      const dataType = dataTypes[0];
+    };
     // for (let i = 0; i < )
     console.log(
       "Execute statement response:",
@@ -566,7 +777,6 @@ const main = async () => {
       queryId: resp.queryId,
     });
     */
-
     await client.closeSession(session.sessionId);
     console.log("Session closed successfully", session.sessionId.toString());
   }
