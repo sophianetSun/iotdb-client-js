@@ -25,8 +25,10 @@
     "client"
   ],
   "license": "apache",
+  "private": true,
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist",
+    "build:types": "tsc --emitDeclarationOnly",
     "prebuild": "rimraf dist",
     "test": "bun test",
     "dev": "bun src/index.ts"

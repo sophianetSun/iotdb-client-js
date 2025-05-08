@@ -30,7 +30,7 @@
     "paths": {
       "@iotdb/common": ["./codegen/org/apache/iotdb/common/rpc/thrift/"],
       "@iotdb/datanode": ["./codegen/org/apache/iotdb/mpp/rpc/thrift/"],
-      "@iotdb/client": ["./codegen/org/apache/iotdb/service/rpc/thrift/"],
-    },
+      "@iotdb/client": ["./codegen/org/apache/iotdb/service/rpc/thrift/"]
+    }
   }
 }
