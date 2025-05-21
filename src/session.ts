@@ -215,9 +215,8 @@ export const getQuery = async (
   const times: Array<Record<string, unknown>> = parseTS(time).map((ts) => ({
     time: ts,
   }));
-  const result = columnNameIndexMap
-    ?.entries()
-    .reduce((acc, [columnName, colIdx]) => {
+  const result = Array.from((columnNameIndexMap ?? new Map()).entries()).reduce(
+    (acc, [columnName, colIdx]) => {
       const column = columnName.split(".").at(-1) ?? columnName;
       const dataTypeIdx = columnIndex2TsBlockColumnIndexList.findIndex(
         (val) => val === colIdx
@@ -246,7 +245,9 @@ export const getQuery = async (
         item[column] = values[idx];
       });
       return acc;
-    }, times);
+    },
+    times
+  );
 
   return result;
 };

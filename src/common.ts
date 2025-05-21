@@ -49,7 +49,13 @@ import {
   TSRawDataQueryReq,
   TSQueryDataSet,
 } from "@iotdb/client";
-import type { OpenSessionConfig } from "./types";
+
+interface OpenSessionConfig {
+  username: string;
+  password: string;
+  zoneId?: string;
+  client_protocol?: TSProtocolVersion;
+}
 
 export class IoTDBClient {
   private host: string;
