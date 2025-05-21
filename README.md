@@ -6,6 +6,8 @@ This is the NodeJS client of Apache IoTDB.
 
 Apache IoTDB website: https://iotdb.apache.org Apache IoTDB GitHub: https://github.com/apache/iotdb
 
+Development: [ttps://github.com/sophianetSun/](https://github.com/sophianetSun/iotdb-client-js)
+
 ## Installation
 
 Install from NPM

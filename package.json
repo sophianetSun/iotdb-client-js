@@ -1,7 +1,14 @@
 {
   "name": "iotdb-client-nodejs",
   "version": "0.0.4",
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sophianetSun/iotdb-client-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sophianetSun/iotdb-client-js"
+  },
+  "author": "SunWoo Kim <sophianet.sun@gmail.com> ",
   "main": "dist/index.js",
   "module": "src/index.ts",
   "devDependencies": {
