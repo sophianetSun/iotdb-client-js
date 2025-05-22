@@ -1,6 +1,6 @@
 {
   "name": "iotdb-client-nodejs",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "SunWoo Kim <sophianet.sun@gmail.com> ",
   "repository": {
     "type": "git",
@@ -33,7 +33,7 @@
   ],
   "license": "apache",
   "scripts": {
-    "build:all": "bun prebuild && bun build ./src/index.ts --outdir ./dist && cp src/index.d.ts dist",
+    "build:all": "bun prebuild && bun build.ts && cp src/index.d.ts dist",
     "prebuild": "rimraf dist",
     "dev": "bun src/index.ts",
     "test:script": "bun tests/test.ts"
