@@ -1,16 +1,13 @@
 {
   "name": "iotdb-client-nodejs",
-  "version": "0.0.5",
+  "version": "0.0.7",
+  "author": "SunWoo Kim <sophianet.sun@gmail.com> ",
   "repository": {
     "type": "git",
     "url": "https://github.com/sophianetSun/iotdb-client-js.git"
   },
-  "bugs": {
-    "url": "https://github.com/sophianetSun/iotdb-client-js"
-  },
-  "author": "SunWoo Kim <sophianet.sun@gmail.com> ",
   "main": "dist/index.js",
-  "module": "src/index.ts",
+  "module": "dist/index.js",
   "devDependencies": {
     "@creditkarma/thrift-typescript": "^3.7.6",
     "@types/bun": "latest",
@@ -20,6 +17,9 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "bugs": {
+    "url": "https://github.com/sophianetSun/iotdb-client-js"
   },
   "description": "IoTDB nodejs client",
   "files": [
@@ -33,15 +33,11 @@
   ],
   "license": "apache",
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist",
-    "build:types": "tsc --emitDeclarationOnly",
+    "build:all": "bun prebuild && bun build.ts && cp src/index.d.ts dist",
     "prebuild": "rimraf dist",
-    "test": "bun test",
-    "dev": "bun src/index.ts"
+    "dev": "bun src/index.ts",
+    "test:script": "bun tests/test.ts"
   },
   "type": "module",
-  "types": "dist/index.d.ts",
-  "dependencies": {
-    "radash": "^12.1.0"
-  }
+  "types": "dist/index.d.ts"
 }
